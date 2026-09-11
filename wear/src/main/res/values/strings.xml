@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Gemini Watch</string>
+    <string name="waiting_for_solution">Ожидание решения...</string>
+    <string name="no_solutions">Нет решений</string>
+</resources>

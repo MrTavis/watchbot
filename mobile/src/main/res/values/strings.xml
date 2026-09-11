@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Gemini Watch Sync</string>
+    <string name="paste_from_clipboard">Вставить из буфера</string>
+    <string name="send_to_watch">Отправить на часы</string>
+    <string name="sync_status_sent">Отправлено на часы!</string>
+    <string name="auto_sync">Авто-отправка при вставке</string>
+    <string name="preview_tab">Формулы</string>
+    <string name="raw_tab">Текст Markdown</string>
+    <string name="history_tab">История</string>
+</resources>

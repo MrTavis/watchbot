@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <link rel="stylesheet" href="katex.min.css">
+  <script src="katex.min.js"></script>
+  <script src="auto-render.min.js"></script>
+  <script src="marked.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #1a1a1a;
+      --accent-color: #1976d2;
+      --code-bg: #f4f4f6;
+      --border-color: #e0e0e0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #121212;
+        --text-color: #e6e6e6;
+        --accent-color: #64b5f6;
+        --code-bg: #1e1e1e;
+        --border-color: #333333;
+      }
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      padding: 16px;
+      margin: 0;
+      word-wrap: break-word;
+    }
+    h1, h2, h3, h4 {
+      color: var(--accent-color);
+      margin-top: 1.2em;
+      margin-bottom: 0.5em;
+    }
+    h1 { font-size: 1.4em; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
+    h2 { font-size: 1.25em; }
+    h3 { font-size: 1.1em; }
+    p { margin: 0.6em 0; }
+    ul, ol { padding-left: 24px; margin: 0.6em 0; }
+    li { margin-bottom: 4px; }
+    pre, code {
+      background-color: var(--code-bg);
+      border-radius: 6px;
+      font-family: "JetBrains Mono", Consolas, Menlo, monospace;
+    }
+    code {
+      padding: 2px 5px;
+      font-size: 0.9em;
+    }
+    pre {
+      padding: 12px;
+      overflow-x: auto;
+    }
+    pre code { padding: 0; }
+    blockquote {
+      border-left: 4px solid var(--accent-color);
+      margin: 0.8em 0;
+      padding-left: 12px;
+      color: #888888;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+    }
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th { background-color: var(--code-bg); }
+    .katex-display-wrapper {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 8px 0;
+      margin: 0.5em 0;
+      text-align: center;
+    }
+    .placeholder-hint {
+      color: #888888;
+      text-align: center;
+      margin-top: 40px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div id="content">
+    <div class="placeholder-hint">Здесь появится отформатированное решение с формулами...</div>
+  </div>
+
+  <script>
+    function renderMarkdownWithMath(rawText) {
+      if (!rawText || !rawText.trim()) {
+        document.getElementById('content').innerHTML = '<div class="placeholder-hint">Здесь появится отформатированное решение с формулами...</div>';
+        return;
+      }
+
+      const mathBlocks = [];
+
+      // Protect block math $$...$$ and \[...\]
+      let text = rawText.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+        const id = `KATEXBLOCKPLACEHOLDER${mathBlocks.length}END`;
+        mathBlocks.push({ id, formula, display: true });
+        return `\n\n${id}\n\n`;
+      }).replace(/\\\[([\s\S]*?)\\\]/g, (match, formula) => {
+        const id = `KATEXBLOCKPLACEHOLDER${mathBlocks.length}END`;
+        mathBlocks.push({ id, formula, display: true });
+        return `\n\n${id}\n\n`;
+      });
+
+      // Protect inline math $...$ and \(...\)
+      text = text.replace(/\$([^\$\n]+?)\$/g, (match, formula) => {
+        const id = `KATEXINLINEPLACEHOLDER${mathBlocks.length}END`;
+        mathBlocks.push({ id, formula, display: false });
+        return id;
+      }).replace(/\\\(([\s\S]*?)\\\)/g, (match, formula) => {
+        const id = `KATEXINLINEPLACEHOLDER${mathBlocks.length}END`;
+        mathBlocks.push({ id, formula, display: false });
+        return id;
+      });
+
+      // Parse Markdown
+      let html = marked.parse(text);
+
+      // Restore math with delimiters
+      for (const item of mathBlocks) {
+        if (item.display) {
+          html = html.replace(new RegExp(`<p>${item.id}</p>`, 'g'), () => `<div class="katex-display-wrapper">$$${item.formula}$$</div>`)
+                     .replace(new RegExp(item.id, 'g'), () => `$$${item.formula}$$`);
+        } else {
+          html = html.replace(new RegExp(item.id, 'g'), () => `$${item.formula}$`);
+        }
+      }
+
+      const container = document.getElementById('content');
+      container.innerHTML = html;
+
+      // Run KaTeX auto-render
+      renderMathInElement(container, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+      });
+    }
+
+    // Called from Android
+    window.setContent = function(text) {
+      renderMarkdownWithMath(text);
+    };
+
+    window.setFontSize = function(sizePx) {
+      document.body.style.fontSize = sizePx + 'px';
+    };
+  </script>
+</body>
+</html>
