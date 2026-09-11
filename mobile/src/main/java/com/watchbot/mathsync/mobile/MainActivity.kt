@@ -272,33 +272,33 @@ fun MainScreen(
                                 currentContent = """
                                     ### Вычисление определенного интеграла
                                     Найдем значение интеграла Пуассона:
-                                    $$I = \int_{-\infty}^{\infty} e^{-x^2} dx$$
+                                    §§I = \int_{-\infty}^{\infty} e^{-x^2} dx§§
                                     
                                     **Решение:**
                                     Рассмотрим квадрат интеграла в декартовых координатах:
-                                    $$I^2 = \left(\int_{-\infty}^{\infty} e^{-x^2} dx\right) \left(\int_{-\infty}^{\infty} e^{-y^2} dy\right) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} e^{-(x^2+y^2)} dx dy$$
+                                    §§I^2 = \left(\int_{-\infty}^{\infty} e^{-x^2} dx\right) \left(\int_{-\infty}^{\infty} e^{-y^2} dy\right) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} e^{-(x^2+y^2)} dx dy§§
                                     
-                                    Перейдем к полярным координатам ($x = r\cos\theta, y = r\sin\theta, dx dy = r dr d\theta$):
-                                    $$I^2 = \int_0^{2\pi} d\theta \int_0^{\infty} e^{-r^2} r dr = 2\pi \cdot \left[-\frac{1}{2} e^{-r^2}\right]_0^\infty = \pi$$
+                                    Перейдем к полярным координатам (§x = r\cos\theta, y = r\sin\theta, dx dy = r dr d\theta§):
+                                    §§I^2 = \int_0^{2\pi} d\theta \int_0^{\infty} e^{-r^2} r dr = 2\pi \cdot \left[-\frac{1}{2} e^{-r^2}\right]_0^\infty = \pi§§
                                     
                                     Следовательно:
-                                    $$I = \sqrt{\pi}$$
-                                """.trimIndent()
+                                    §§I = \sqrt{\pi}§§
+                                """.trimIndent().replace('§', '$')
                                 currentTitle = "Интеграл Пуассона"
                             },
                             onLoadSamplePhysics = {
                                 currentContent = """
                                     ### Физика: Уравнение Шрёдингера
                                     Стационарное одномерное уравнение:
-                                    $$-\frac{\hbar^2}{2m} \frac{d^2\psi(x)}{dx^2} + U(x)\psi(x) = E\psi(x)$$
+                                    §§-\frac{\hbar^2}{2m} \frac{d^2\psi(x)}{dx^2} + U(x)\psi(x) = E\psi(x)§§
                                     
                                     где:
-                                    * $\hbar = \frac{h}{2\pi}$ — редуцированная постоянная Планка;
-                                    * $m$ — масса микрочастицы;
-                                    * $\psi(x)$ — волновая функция;
-                                    * $U(x)$ — потенциальная энергия;
-                                    * $E$ — полная энергия частицы.
-                                """.trimIndent()
+                                    * §\hbar = \frac{h}{2\pi}§ — редуцированная постоянная Планка;
+                                    * §m§ — масса микрочастицы;
+                                    * §\psi(x)§ — волновая функция;
+                                    * §U(x)§ — потенциальная энергия;
+                                    * §E§ — полная энергия частицы.
+                                """.trimIndent().replace('§', '$')
                                 currentTitle = "Уравнение Шрёдингера"
                             }
                         )
