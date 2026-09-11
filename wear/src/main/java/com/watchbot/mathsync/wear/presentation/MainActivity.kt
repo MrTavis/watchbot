@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -25,43 +24,78 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
 import com.watchbot.mathsync.wear.SolutionStorage
 import com.watchbot.mathsync.wear.presentation.theme.GeminiWatchTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
+    private var crashLog by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        SolutionStorage.init(this)
 
-        // Keep screen on by default so formulas stay visible during study
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // Prevent silent crash: show error on screen if any unexpected exception happens
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+            throwable.printStackTrace()
+            crashLog = "${throwable.javaClass.simpleName}: ${throwable.message}"
+        }
+
+        try {
+            SolutionStorage.init(this)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } catch (t: Throwable) {
+            t.printStackTrace()
+            crashLog = "Init error: ${t.message}"
+        }
 
         setContent {
             GeminiWatchTheme {
-                WatchApp(
-                    onToggleKeepScreen = { enable ->
-                        if (enable) {
-                            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                        } else {
-                            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                        }
+                if (crashLog != null) {
+                    // Safe crash display screen
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black)
+                            .padding(20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "⚠ Ошибка:\n$crashLog",
+                            color = Color(0xFFFF5252),
+                            fontSize = 11.sp,
+                            textAlign = TextAlign.Center
+                        )
                     }
-                )
+                } else {
+                    WatchApp(
+                        onToggleKeepScreen = { enable ->
+                            if (enable) {
+                                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                            } else {
+                                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                            }
+                        }
+                    )
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WatchApp(
     onToggleKeepScreen: (Boolean) -> Unit
 ) {
     val solutions by SolutionStorage.solutionsFlow.collectAsState()
     var currentIndex by remember { mutableIntStateOf(0) }
-    var webViewHolder by remember { mutableStateOf<WatchWebViewHolder?>(null) }
+    var fontSizeSp by remember { mutableFloatStateOf(14.5f) }
     var isKeepScreenOn by remember { mutableStateOf(true) }
 
-    // Ensure index stays in bounds when solutions change
+    val listState = rememberScalingLazyListState()
+    val focusRequester = remember { FocusRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Ensure index stays in bounds
     val safeIndex = if (solutions.isNotEmpty()) {
         currentIndex.coerceIn(0, solutions.size - 1)
     } else {
@@ -69,10 +103,13 @@ fun WatchApp(
     }
 
     val currentSolution = solutions.getOrNull(safeIndex)
-    val focusRequester = remember { FocusRequester() }
 
+    // Request focus safely for rotary scroll after layout is ready
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        delay(300)
+        runCatching {
+            focusRequester.requestFocus()
+        }
     }
 
     Box(
@@ -81,40 +118,30 @@ fun WatchApp(
             .background(Color.Black)
             .focusRequester(focusRequester)
             .focusable()
-            // Catch Rotary crown / touch bezel scroll on Galaxy Watch Ultra
+            // Physical / touch bezel rotary scroll
             .onRotaryScrollEvent { event ->
-                val delta = event.verticalScrollPixels.toInt()
-                webViewHolder?.scrollByDelta(delta)
+                coroutineScope.launch {
+                    val delta = event.verticalScrollPixels
+                    listState.scrollBy(delta)
+                }
                 true
             }
     ) {
-        // Main Math / KaTeX Viewer
-        if (currentSolution != null) {
-            WatchMathView(
-                markdownContent = currentSolution.content,
-                onHolderReady = { holder ->
-                    webViewHolder = holder
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            // Empty State
-            WatchMathView(
-                markdownContent = "",
-                onHolderReady = { holder ->
-                    webViewHolder = holder
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        // Native Rock-solid Math & Markdown Viewer
+        NativeMathViewer(
+            markdownContent = currentSolution?.content ?: "",
+            fontSizeSp = fontSizeSp,
+            listState = listState,
+            modifier = Modifier.fillMaxSize()
+        )
 
-        // --- TOP OVERLAY: Navigation & Status ---
+        // --- TOP OVERLAY: Solution Navigator (if multiple solutions exist) ---
         if (solutions.size > 1) {
             Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
-                    .background(Color(0xCC111111), shape = RoundedCornerShape(16.dp))
+                    .padding(top = 10.dp)
+                    .background(Color(0xEE111111), shape = RoundedCornerShape(16.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -128,7 +155,7 @@ fun WatchApp(
                         .clickable(enabled = safeIndex > 0) {
                             currentIndex = (safeIndex - 1).coerceAtLeast(0)
                         }
-                        .padding(4.dp)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
                 )
 
                 Text(
@@ -147,7 +174,7 @@ fun WatchApp(
                         .clickable(enabled = safeIndex < solutions.size - 1) {
                             currentIndex = (safeIndex + 1).coerceAtMost(solutions.size - 1)
                         }
-                        .padding(4.dp)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
                 )
             }
         }
@@ -157,7 +184,7 @@ fun WatchApp(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 6.dp)
-                .background(Color(0xCC000000), shape = RoundedCornerShape(20.dp))
+                .background(Color(0xEE080808), shape = RoundedCornerShape(20.dp))
                 .padding(horizontal = 8.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -165,12 +192,12 @@ fun WatchApp(
             // Font size down
             Box(
                 modifier = Modifier
-                    .size(26.dp)
+                    .size(28.dp)
                     .background(Color(0xFF1E1E1E), shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Button(
-                    onClick = { webViewHolder?.changeFontSize(-2) },
+                    onClick = { fontSizeSp = (fontSizeSp - 1.5f).coerceAtLeast(10f) },
                     modifier = Modifier.fillMaxSize(),
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF1E1E1E))
                 ) {
@@ -181,7 +208,7 @@ fun WatchApp(
             // Screen On indicator / toggle
             Box(
                 modifier = Modifier
-                    .size(26.dp)
+                    .size(28.dp)
                     .background(Color(0xFF1E1E1E), shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -207,12 +234,12 @@ fun WatchApp(
             // Font size up
             Box(
                 modifier = Modifier
-                    .size(26.dp)
+                    .size(28.dp)
                     .background(Color(0xFF1E1E1E), shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Button(
-                    onClick = { webViewHolder?.changeFontSize(+2) },
+                    onClick = { fontSizeSp = (fontSizeSp + 1.5f).coerceAtMost(24f) },
                     modifier = Modifier.fillMaxSize(),
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF1E1E1E))
                 ) {
