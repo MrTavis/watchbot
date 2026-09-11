@@ -263,9 +263,21 @@ fun MainScreen(
                 .weight(1f)
                 .fillMaxWidth()
         ) {
+            // Keep MathView persistent so tab switching is instantaneous with zero reload or flickering
+            if (currentContent.isNotBlank()) {
+                Box(
+                    modifier = if (selectedTab == 0) Modifier.fillMaxSize() else Modifier.size(0.dp)
+                ) {
+                    MathView(
+                        markdownContent = currentContent,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
             when (selectedTab) {
                 0 -> {
-                    // Preview of formulas
+                    // Show EmptyState when there is no content to display yet
                     if (currentContent.isBlank()) {
                         EmptyState(
                             onLoadSampleIntegral = {
@@ -301,11 +313,6 @@ fun MainScreen(
                                 """.trimIndent().replace('§', '$')
                                 currentTitle = "Уравнение Шрёдингера"
                             }
-                        )
-                    } else {
-                        MathView(
-                            markdownContent = currentContent,
-                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }

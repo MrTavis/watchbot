@@ -31,7 +31,7 @@ fun MathView(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setBackgroundColor(Color.TRANSPARENT)
+            setBackgroundColor(android.graphics.Color.parseColor("#121212"))
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true

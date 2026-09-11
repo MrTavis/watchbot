@@ -9,23 +9,14 @@
   <script src="marked.min.js"></script>
   <style>
     :root {
-      --bg-color: #ffffff;
-      --text-color: #1a1a1a;
-      --accent-color: #1976d2;
-      --code-bg: #f4f4f6;
-      --border-color: #e0e0e0;
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --accent-color: #64b5f6;
+      --code-bg: #1e1e1e;
+      --border-color: #2c2c2c;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-color: #121212;
-        --text-color: #e6e6e6;
-        --accent-color: #64b5f6;
-        --code-bg: #1e1e1e;
-        --border-color: #333333;
-      }
-    }
-    body {
-      background-color: var(--bg-color);
+    html, body {
+      background-color: #121212 !important;
       color: var(--text-color);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 16px;
@@ -77,10 +68,13 @@
     }
     th { background-color: var(--code-bg); }
     .katex-display-wrapper {
+      background: #1c1c1c;
+      border: 1px solid #2e2e2e;
+      border-radius: 8px;
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 8px 0;
-      margin: 0.5em 0;
+      padding: 8px 6px;
+      margin: 0.6em 0;
       text-align: center;
     }
     .placeholder-hint {
