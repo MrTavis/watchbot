@@ -45,8 +45,7 @@ watchbot/
 
 ### Шаг 1: Открытие проекта в Android Studio
 1. Скачайте и установите **[Android Studio](https://developer.android.com/studio)** (версия Hedgehog, Iguana, Jellyfish или новее).
-2. Запустите Android Studio и выберите **Open**, укажите папку проекта:
-   `c:\Users\vovan\Desktop\watchbot`
+2. Запустите Android Studio и выберите **Open**, укажите папку проекта **`watchbot`**.
 3. Дождитесь автоматической синхронизации Gradle (в правом нижнем углу появится надпись *Gradle sync finished*).
 
 ---
